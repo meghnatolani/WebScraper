@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Rate Limiter
- * Fixed number of requests per second
+ * Criteria : Fixed number of requests per second
  * */
 
 public class RateLimiter {

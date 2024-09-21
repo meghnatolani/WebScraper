@@ -26,24 +26,4 @@ public class HttpUtils {
 
         return response.body();
     }
-
-    /**
-     * Determines whether a URL is valid and accessible.
-     *
-     * @param url The URL to check.
-     * @return true if the URL is accessible; false otherwise.
-     */
-    public static boolean isValidUrl(String url) {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
-                    .build();
-
-            HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
-            return response.statusCode() == 200;
-        } catch (Exception e) {
-            return false;
-        }
-    }
 }

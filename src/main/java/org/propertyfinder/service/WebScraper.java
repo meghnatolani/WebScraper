@@ -45,7 +45,7 @@ public class WebScraper {
     }
 
 
-    private void shutdownExecutorService() {
+    public void shutdownExecutorService() {
         try {
             executorService.shutdown();
             if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {
