@@ -1,10 +1,12 @@
 package org.propertyfinder.scraper;
 
+import org.propertyfinder.model.ScrapedData;
+
 /**
  * Common Interface for Content-type
  * */
 
 public interface ContentScraper {
 
-    void scrape(String content);
+    ScrapedData scrape(String content);
 }

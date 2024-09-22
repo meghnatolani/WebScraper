@@ -15,14 +15,12 @@ public class HttpUtilsTest {
 
     @Test
     public void testSendGetRequest_Success() throws Exception {
-        String url = "http://example.com";
+        String url = "http://test-service.com";
         String expectedResponse = "Mocked response content";
 
-        // Mocking the static method sendGetRequest in HttpUtils
         try (MockedStatic<HttpUtils> mockedHttpUtils = Mockito.mockStatic(HttpUtils.class)) {
             mockedHttpUtils.when(() -> HttpUtils.sendGetRequest(url)).thenReturn(expectedResponse);
 
-            // Test sendGetRequest method
             String response = HttpUtils.sendGetRequest(url);
             assertEquals(expectedResponse, response);
             mockedHttpUtils.verify(() -> HttpUtils.sendGetRequest(url));

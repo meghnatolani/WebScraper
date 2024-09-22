@@ -1,87 +1,112 @@
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.powermock.reflect.Whitebox;
 import org.propertyfinder.scraper.ContentScraper;
+import org.propertyfinder.scraper.HTMLScraper;
 import org.propertyfinder.scraper.ScraperFactory;
 import org.propertyfinder.service.WebScraper;
 import org.propertyfinder.utils.HttpUtils;
-import org.propertyfinder.utils.RateLimiter;
 
-import java.io.IOException;
+import java.net.http.HttpClient;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({HttpUtils.class, ScraperFactory.class})
+@PrepareForTest({HttpUtils.class, ScraperFactory.class}) // Prepare the classes with static methods
+@SuppressStaticInitializationFor({"HttpUtils"}) // fully qualified name in here
 public class WebScraperTest {
 
-    @Mock
-    private RateLimiter rateLimiter;
-
-    @Mock
-    private ContentScraper contentScraper;
-
-    @Mock
-    private ExecutorService executorService;
-
-    @InjectMocks
-    private WebScraper webScraper = new WebScraper(2, 5);
+    private WebScraper webScraper;
 
     @Before
     public void setUp() {
-        webScraper = new WebScraper(2, 5);
+        webScraper = new WebScraper(10, 5); // Instantiate the WebScraper
+        Whitebox.setInternalState(HttpUtils.class, "httpClient", (HttpClient) null);
     }
 
     @Test
     public void testScrapeUrl_Success() throws Exception {
-        // Mocking the behavior of HttpUtils and ScraperFactory
-        String url = "http://example.com";
-        String mockedContent = "Mocked content";
+        String url = "http://example.com/product1";
+        List<String> urls = List.of(url);
+        String expectedResponse = "<html><div><product data-id=\"123\"></product></div></html>";
 
-        when(HttpUtils.sendGetRequest(url)).thenReturn(mockedContent);
-        when(ScraperFactory.getScraper(url)).thenReturn(contentScraper);
+        PowerMockito.mockStatic(HttpUtils.class);
+        PowerMockito.when(HttpUtils.sendGetRequest(any())).thenAnswer((Answer<String>) response -> expectedResponse);
 
-        // Run the method to test
-        webScraper.scrapeUrls(Collections.singletonList(url));
+        ContentScraper mockScraper = PowerMockito.mock(HTMLScraper.class);
+        PowerMockito.mockStatic(ScraperFactory.class);
+        PowerMockito.when(ScraperFactory.getScraper(any())).thenAnswer((Answer<ContentScraper>)mock -> mockScraper);
 
-        // Verifying that the methods were called as expected
-        verify(rateLimiter, never()).processRequest();
-        verify(contentScraper).scrape(mockedContent);
+        // Mock the static method HttpUtils.sendGetRequest
+//        PowerMockito.when(HttpUtils.sendGetRequest(Mockito.anyString()))
+//                .thenAnswer(new Answer<String>() {
+//                    @Override
+//                    public String answer(InvocationOnMock invocation) {
+//                        String url = invocation.getArgument(0);
+//                        return "Mocked content for " + url;
+//                    }
+//                });
+//
+//        // Mock the static method ScraperFactory.getScraper
+//        PowerMockito.when(ScraperFactory.getScraper(Mockito.anyString()))
+//                .thenAnswer(new Answer<ContentScraper>() {
+//                    @Override
+//                    public ContentScraper answer(InvocationOnMock invocation) {
+//                        String url = invocation.getArgument(0);
+//                        if (url.contains("product")) {
+//                            return new HTMLScraper();
+//                        } else {
+//                            return new JSONScraper();
+//                        }
+//                    }
+//                });
+
+        // Call the method under test
+        Map<String, String> result = webScraper.scrapeUrls(urls);
+
+        // Verify results
+        Map<String, String> expected = new HashMap<>();
+        expected.put("http://example.com/product1", "Mock content");
+        expected.put("http://example.com/product2", "Mock content");
+
+        assertEquals(expected, result);
     }
 
     @Test
-    public void testScrapeUrls_MultipleUrls() throws IOException, InterruptedException {
-        String url1 = "http://example1.com";
-        String url2 = "http://example2.com";
-        List<String> urls = Arrays.asList(url1, url2);
+    public void testScrapeUrls_Success_HTMLScraper() throws Exception {
+        List<String> urls = Arrays.asList("http://example.com/product1");
 
-        when(ScraperFactory.getScraper(anyString())).thenReturn(contentScraper);
-        when(ScraperFactory.getScraper(anyString())).thenReturn(contentScraper);
-        when(HttpUtils.sendGetRequest(anyString())).thenReturn("Mocked content");
+        // Mocking HttpUtils.sendGetRequest
+        PowerMockito.when(HttpUtils.sendGetRequest(Mockito.anyString()))
+                .thenAnswer((Answer<String>) invocation -> {
+                    String url = invocation.getArgument(0);
+                    return "Mocked content for " + url;
+                });
 
-        // Execute the scrapeUrls method
-        webScraper.scrapeUrls(urls);
+        // Mocking ScraperFactory.getScraper to return HTMLScraper
+        PowerMockito.when(ScraperFactory.getScraper(Mockito.anyString()))
+                .thenReturn(new HTMLScraper());
 
-        // Verify that executor service submitted tasks
-        verify(executorService, times(2)).submit(any(Runnable.class));
-    }
+        // Call the method under test
+        Map<String, String> result = webScraper.scrapeUrls(urls);
 
-    @Test
-    public void testShutdownExecutorService() throws InterruptedException {
-        // Invoke the shutdownExecutorService method
-        webScraper.shutdownExecutorService();
+        // Expected results for HTMLScraper
+        Map<String, String> expected = new HashMap<>();
+        expected.put("http://example.com/product1", "Mocked content for http://example.com/product1");
 
-        // Verifying executor service shutdown
-        verify(executorService).shutdown();
-        verify(executorService).awaitTermination(60, TimeUnit.SECONDS);
+        // Verify results
+        assertEquals(expected, result);
     }
 }

@@ -4,7 +4,7 @@ package org.propertyfinder.model;
  * Modal Class for Product JSON
  * */
 
-public class Product {
+public class Product implements ScrapedData{
     private String id;
     private String title;
 
@@ -31,6 +31,6 @@ public class Product {
 
     @Override
     public String toString() {
-        return "Product [id=" + id + ", title=" + title + "]";
+        return "id=" + id + ", title=" + title;
     }
 }

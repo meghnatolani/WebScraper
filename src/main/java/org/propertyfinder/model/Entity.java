@@ -4,7 +4,7 @@ package org.propertyfinder.model;
  * Modal Class for Entity JSON
  * */
 
-public class Entity {
+public class Entity implements ScrapedData {
     private String title;
 
     public Entity(String title) {
@@ -21,6 +21,6 @@ public class Entity {
 
     @Override
     public String toString() {
-        return "Entity [title=" + title + "]";
+        return "title=" + title;
     }
 }

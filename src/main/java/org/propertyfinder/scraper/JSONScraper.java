@@ -9,17 +9,18 @@ import org.propertyfinder.model.Entity;
  * */
 
 public class JSONScraper implements ContentScraper {
+
     @Override
-    public void scrape(String content) {
+    public Entity scrape(String content) {
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode jsonNode = mapper.readTree(content);
             String title = jsonNode.get("title").asText();
-            Entity entity = new Entity(title);
-            System.out.println(entity);
+            return new Entity(title);
 
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
 }
