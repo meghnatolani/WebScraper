@@ -13,7 +13,7 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-            String websiteUrl = "http://localhost:8000";
+            String websiteUrl = "http://localhost:8000/index.html";
 
             // Fetch all the Pages present in a Website.
             URLExtractor urlExtractor = new URLExtractor();

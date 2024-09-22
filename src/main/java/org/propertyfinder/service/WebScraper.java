@@ -23,7 +23,6 @@ public class WebScraper {
     public Map<String, String> scrapeUrls(List<String> urls) {
         Map<String, Future<ScrapedData>> futuresMap = new ConcurrentHashMap<>();
 
-        // Submit tasks and collect futures
         for (String url : urls) {
             Future<ScrapedData> future = executorService.submit(() -> {
                 rateLimiter.processRequest();
@@ -34,7 +33,6 @@ public class WebScraper {
 
         shutdownExecutorService();
 
-        // Convert Future<ScrapedData> to String
         Map<String, String> results = new ConcurrentHashMap<>();
         for (Map.Entry<String, Future<ScrapedData>> entry : futuresMap.entrySet()) {
             String url = entry.getKey();
